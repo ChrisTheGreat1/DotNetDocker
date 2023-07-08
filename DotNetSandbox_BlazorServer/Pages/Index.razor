@@ -1,0 +1,64 @@
+﻿@page "/"
+@implements IAsyncDisposable
+@inject NavigationManager Navigation
+
+<div class="text-center">
+    <button class="btn btn-primary index-button" @onclick="CreateGroup">Create Group</button>
+</div>
+
+<div class="text-center">
+    <h5><u>Group ID List</u></h5>
+</div>
+
+
+@if(codeGroupList is null)
+{
+    <p>No groups available</p>
+}
+else
+{
+    @foreach (var group in codeGroupList)
+    {
+        <li>
+            <a href="/groupComponent/@group">@group</a>
+        </li>
+    }
+}
+
+@code {
+    private HubConnection? hubConnection;
+    private List<string>? codeGroupList;
+
+    protected override async Task OnInitializedAsync()
+    {
+        hubConnection = new HubConnectionBuilder()
+            .WithUrl(Navigation.ToAbsoluteUri("/codehub"))
+            .Build();
+
+        hubConnection.On<List<string>>("UpdateGroupsList", (guids) =>
+        {
+            codeGroupList = guids;
+            InvokeAsync(StateHasChanged);
+        });
+
+        await hubConnection.StartAsync();
+
+        await hubConnection.SendAsync("UpdateGroupsList");
+    }
+
+    private async Task CreateGroup()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.SendAsync("CreateGroup");
+        }
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (hubConnection is not null)
+        {
+            await hubConnection.DisposeAsync();
+        }
+    }
+}

@@ -1,0 +1,46 @@
+﻿@inject IHubContext<CodeHub> hubContext
+@inject NavigationManager Navigation
+
+@page "/groupComponent/{GroupGuid}"
+@using System.Text.RegularExpressions;
+@using System.Web;
+
+@if (groupExists)
+{
+    <div class="text-center">
+        <h5>Group ID: @GroupGuid</h5>
+    </div>
+
+    <div class="textarea-container">
+        <textarea id="code-text-area" @bind="groupTextEditor" @bind:event="oninput" @bind:after="SendCodeToGroup" disabled="@codeExecuting"></textarea>
+    </div>
+
+    <div class="button-container">
+        <button class="btn btn-primary" @onclick="FormatTextArea" disabled="@codeExecuting">Format Text</button>
+        <button class="btn btn-primary" @onclick="ExecuteGroupCode" disabled="@codeExecuting">Run Code</button>
+        <button class="btn btn-danger" @onclick="DeleteGroup" disabled="@codeExecuting">Delete Code Group</button>
+    </div>
+
+    @if (codeExecuting)
+    {
+        <div>
+            <i>Waiting for code to finish executing...</i>
+        </div>
+    }
+
+    <div>
+        <p>
+            <i>Code result:</i>
+        </p>
+        <br>
+        @((MarkupString)Regex.Replace(
+            HttpUtility.HtmlEncode(codeResult),
+            "\\r?\\n|\\r",
+            "<br />"
+            ))
+    </div>
+}
+else
+{
+    <p>No group info available.</p>
+}
